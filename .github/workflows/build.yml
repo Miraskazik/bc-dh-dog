@@ -1,0 +1,33 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read   # stažení server stubu bc-dh-customer-api z GitHub Packages
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+          # server-id musí odpovídat <repository><id> v pom.xml (github)
+          server-id: github
+          server-username: GITHUB_ACTOR
+          server-password: GITHUB_TOKEN
+
+      - name: Build & verify
+        run: mvn -B verify
+        env:
+          # auth vůči GitHub Packages pro stažení bc-dh-customer-api
+          GITHUB_TOKEN: ${{ github.token }}
