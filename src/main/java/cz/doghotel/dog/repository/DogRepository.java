@@ -16,11 +16,16 @@ import java.util.UUID;
  */
 public interface DogRepository extends JpaRepository<Dog, UUID> {
 
+    /**
+     * {@code cast(:q as String)} je nutný kvůli PostgreSQL: při {@code q == null} se
+     * parametr pošle bez typu, {@code ||} uvnitř concat se rozřeší na {@code bytea}
+     * a dotaz spadne na "function lower(bytea) does not exist".
+     */
     @Query("""
         select d from Dog d
         where (:q is null
-               or lower(d.name) like lower(concat('%', :q, '%'))
-               or lower(d.breed) like lower(concat('%', :q, '%')))
+               or lower(d.name) like lower(concat('%', cast(:q as String), '%'))
+               or lower(d.breed) like lower(concat('%', cast(:q as String), '%')))
           and (:customerId is null or d.customerId = :customerId)
         """)
     Page<Dog> search(@Param("q") String q, @Param("customerId") UUID customerId, Pageable pageable);
